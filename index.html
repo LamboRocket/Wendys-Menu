@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Wendy's Build Quiz</title>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system, BlinkMacSystemFont, ‘Segoe UI’, Arial, sans-serif;background:#1a0b00;color:#fff8ee;min-height:100vh;overflow-x:hidden;}
+
+/* HEADER */
+.hdr{background:#e2231a;padding:10px 18px;display:flex;align-items:center;gap:10px;
+box-shadow:0 3px 14px rgba(0,0,0,.6);position:sticky;top:0;z-index:200;}
+.logo{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:22px;letter-spacing:2px;text-shadow:2px 2px 0 #7a0e0a;}
+.logo span{color:#ffb900;}
+.hdr-scores{margin-left:auto;display:flex;gap:14px;}
+.hs{text-align:center;}
+.hs-n{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:20px;line-height:1;}
+.hs-n.g{color:#ffb900;}.hs-n.b{color:rgba(255,255,255,.4);}
+.hs-l{font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;}
+
+/* NAV */
+.nav{display:flex;background:#1e0d00;border-bottom:2px solid rgba(255,185,0,.1);padding:0 18px;}
+.nv{background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,248,238,.4);
+font-family:-apple-system, BlinkMacSystemFont, ‘Segoe UI’, Arial, sans-serif;font-weight:800;font-size:12px;padding:9px 14px;cursor:pointer;
+transition:.2s;margin-bottom:-2px;}
+.nv:hover{color:#fff8ee;}
+.nv.on{color:#ffb900;border-bottom-color:#ffb900;}
+
+/* SCREENS */
+.scr{display:none;}.scr.on{display:block;}
+
+/* ═══ HOME ═══ */
+#home{display:none;flex-direction:column;align-items:center;padding:44px 20px 60px;text-align:center;}
+#home.on{display:flex;}
+.h-title{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:clamp(54px,13vw,110px);line-height:.88;
+color:#ffb900;text-shadow:4px 5px 0 #7a0e0a;margin-bottom:6px;}
+.h-sub{font-size:14px;color:rgba(255,248,238,.45);max-width:340px;margin-bottom:34px;line-height:1.6;}
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;
+width:100%;max-width:620px;margin-bottom:28px;}
+.mc{background:#2a1200;border:2px solid rgba(255,185,0,.12);border-radius:14px;padding:18px 14px;
+cursor:pointer;transition:.2s;text-align:left;}
+.mc:hover,.mc.on{border-color:#ffb900;background:#3d1900;transform:translateY(-2px);}
+.mc.on{box-shadow:0 0 0 3px rgba(255,185,0,.2);}
+.mc-i{font-size:28px;margin-bottom:6px;}
+.mc-n{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:18px;color:#ffb900;letter-spacing:1px;}
+.mc-d{font-size:11px;color:rgba(255,248,238,.45);margin-top:2px;}
+.start-btn{background:#e2231a;color:#fff;border:none;font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;
+font-size:26px;letter-spacing:2px;padding:14px 58px;border-radius:50px;cursor:pointer;
+box-shadow:0 4px 20px rgba(226,35,26,.4);transition:.2s;}
+.start-btn:hover{background:#a81812;transform:scale(1.04);}
+
+/* ═══ QUIZ ═══ */
+#quiz{display:none;flex-direction:column;height:calc(100vh - 88px);}
+#quiz.on{display:flex;}
+
+/* qbar with timer */
+.qbar{display:flex;align-items:center;gap:10px;background:#1e0d00;padding:8px 18px;
+border-bottom:1px solid rgba(255,185,0,.08);flex-shrink:0;}
+.qnum{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:14px;color:#ffb900;white-space:nowrap;}
+.prog{flex:1;height:5px;background:rgba(0,0,0,.4);border-radius:5px;overflow:hidden;}
+.prog-f{height:100%;background:linear-gradient(90deg,#ffb900,#e2231a);border-radius:5px;transition:width .4s;}
+
+/* timer badge */
+.timer-wrap{display:none;align-items:center;gap:6px;flex-shrink:0;}
+.timer-wrap.on{display:flex;}
+.timer-ring{position:relative;width:36px;height:36px;}
+.timer-ring svg{transform:rotate(-90deg);}
+.timer-ring circle{fill:none;stroke-width:3;}
+.timer-ring .bg{stroke:rgba(255,255,255,.1);}
+.timer-ring .fg{stroke:#ffb900;stroke-linecap:round;transition:stroke-dashoffset .9s linear,stroke .3s;}
+.timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:15px;color:#ffb900;}
+.timer-num.urgent{color:#e2231a;}
+.timer-ring .fg.urgent{stroke:#e2231a;}
+
+/* sandwich name */
+.q-name-bar{background:#e2231a;padding:12px 18px;text-align:center;flex-shrink:0;
+box-shadow:0 3px 10px rgba(226,35,26,.25);}
+.qn-lbl{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.55);text-transform:uppercase;}
+.qn-name{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:clamp(22px,5vw,38px);letter-spacing:2px;
+text-shadow:2px 2px 0 rgba(0,0,0,.3);}
+
+/* quiz main layout */
+.quiz-main{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ── PLATE (left) ── */
+.plate-col{width:200px;min-width:155px;background:#120700;
+border-right:2px solid rgba(255,185,0,.1);display:flex;flex-direction:column;overflow:hidden;}
+.plate-head{background:#1e0d00;padding:8px 12px;font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;
+font-size:11px;letter-spacing:2px;color:rgba(255,248,238,.45);flex-shrink:0;
+border-bottom:1px solid rgba(255,185,0,.08);display:flex;align-items:center;justify-content:space-between;}
+.plate-hint{font-size:9px;color:rgba(255,185,0,.5);letter-spacing:.5px;
+font-family:-apple-system, BlinkMacSystemFont, ‘Segoe UI’, Arial, sans-serif;font-weight:700;}
+.plate-drop{flex:1;overflow-y:auto;padding:8px 10px 12px;
+display:flex;flex-direction:column;justify-content:flex-end;gap:3px;}
+.plate-drop.drag-over{background:rgba(255,185,0,.06);}
+
+/* plate items */
+.plate-item{background:#3d1900;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;
+padding:6px 10px;display:flex;align-items:center;gap:7px;
+font-size:12px;font-weight:800;animation:stackIn .18s ease;user-select:none;}
+.plate-item .p-num{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:16px;color:#ffb900;min-width:18px;}
+.plate-item .p-ico{font-size:18px;}
+.plate-item .p-name{font-size:11px;color:rgba(255,248,238,.85);flex:1;line-height:1.2;}
+.plate-item .p-cnt{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:13px;color:#ffb900;
+background:rgba(255,185,0,.15);border-radius:5px;padding:1px 5px;flex-shrink:0;}
+.plate-item .p-del{color:rgba(255,100,100,.5);font-size:14px;cursor:pointer;padding:2px 0 2px 4px;flex-shrink:0;}
+.plate-item .p-del:hover{color:#ff6464;}
+@keyframes stackIn{from{transform:translateY(-8px) scale(.95);opacity:0;}to{transform:none;opacity:1;}}
+.plate-item.r-ok{background:#0d2e12;border-color:#4caf50;}
+.plate-item.r-bad{background:#2e0d0d;border-color:#ef5350;}
+.plate-empty{color:rgba(255,255,255,.2);font-size:11px;font-style:italic;text-align:center;
+padding:16px 8px;align-self:center;}
+
+/* plate bottom actions */
+.plate-actions{flex-shrink:0;padding:8px 10px;border-top:1px solid rgba(255,185,0,.08);display:flex;gap:6px;}
+.pa-btn{flex:1;border:none;font-family:-apple-system, BlinkMacSystemFont, ‘Segoe UI’, Arial, sans-serif;font-weight:900;font-size:12px;
+padding:8px 6px;border-radius:8px;cursor:pointer;transition:.15s;}
+.pa-clear{background:rgba(255,255,255,.07);color:rgba(255,255,255,.45);
+border:1.5px solid rgba(255,255,255,.1);}
+.pa-clear:hover{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.25);}
+.pa-submit{background:#ffb900;color:#1a0800;box-shadow:0 2px 10px rgba(255,185,0,.2);}
+.pa-submit:hover{box-shadow:0 4px 16px rgba(255,185,0,.35);transform:translateY(-1px);}
+.pa-submit:disabled{background:#3a2e00;color:#1a1400;cursor:default;transform:none;box-shadow:none;}
+
+/* ── PALETTE (right) ──
+Key mobile fix: touch-action:pan-y so scroll works normally,
+drag only fires on desktop or after long-press threshold */
+.palette-col{flex:1;overflow-y:auto;padding:10px 12px 16px;
+display:flex;flex-direction:column;gap:4px;
+touch-action:pan-y; /* allow vertical scroll on mobile */
+}
+.cat-lbl{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:10px;letter-spacing:2px;
+color:rgba(255,185,0,.4);padding:6px 0 2px;margin-top:2px;}
+
+/* ingredient card — no draggable on mobile (tap only) */
+.ing-card{background:#2a1200;border:2px solid rgba(255,255,255,.07);border-radius:10px;
+padding:9px 12px;display:flex;align-items:center;gap:10px;
+cursor:pointer;transition:all .12s;user-select:none;position:relative;}
+.ing-card:active{transform:scale(.97);}
+.ing-card:hover{border-color:rgba(255,185,0,.4);background:#3d1900;}
+.ing-card.used{opacity:.28;pointer-events:none;}
+.ing-card.used-multi{opacity:.65;}
+.ic-ico{font-size:24px;flex-shrink:0;}
+.ic-info{flex:1;min-width:0;}
+.ic-name{font-size:12px;font-weight:800;color:rgba(255,248,238,.9);line-height:1.2;}
+.ic-sub{font-size:10px;color:rgba(255,248,238,.45);margin-top:1px;}
+.ic-count{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:14px;color:#ffb900;
+background:rgba(255,185,0,.12);border-radius:6px;padding:1px 7px;flex-shrink:0;}
+/* desktop drag hint */
+.drag-hint{font-size:11px;color:rgba(255,255,255,.15);flex-shrink:0;}
+
+/* RESULT OVERLAY */
+.res-overlay{display:none;position:fixed;inset:0;z-index:300;
+background:rgba(0,0,0,.65);backdrop-filter:blur(3px);
+align-items:center;justify-content:center;padding:20px;}
+.res-overlay.on{display:flex;}
+.res-box{background:#2a1200;border-radius:18px;padding:24px 22px;max-width:420px;width:100%;
+border:2px solid rgba(255,255,255,.1);box-shadow:0 20px 60px rgba(0,0,0,.6);animation:popIn .25s ease;}
+@keyframes popIn{from{transform:scale(.9);opacity:0;}to{transform:none;opacity:1;}}
+.res-box.pass{border-color:#4caf50;}.res-box.fail{border-color:#ef5350;}
+.res-title{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:30px;letter-spacing:2px;margin-bottom:6px;}
+.res-box.pass .res-title{color:#a5d6a7;}.res-box.fail .res-title{color:#ef9a9a;}
+.res-detail{font-size:12px;color:rgba(255,255,255,.65);line-height:1.9;max-height:220px;overflow-y:auto;}
+.res-detail .mk{color:#ffd54f;font-weight:900;}.res-detail .ek{color:#ef9a9a;font-weight:900;}
+.res-nxt{width:100%;background:#e2231a;color:#fff;border:none;font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;
+font-size:22px;letter-spacing:2px;padding:12px;border-radius:10px;cursor:pointer;margin-top:14px;transition:.2s;}
+.res-nxt:hover{background:#a81812;}
+
+/* RESULTS */
+#results{display:none;flex-direction:column;align-items:center;padding:44px 20px 60px;text-align:center;}
+#results.on{display:flex;}
+.fin-title{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:clamp(46px,11vw,92px);line-height:.9;
+color:#ffb900;text-shadow:4px 4px 0 #7a0e0a;margin-bottom:6px;}
+.fin-sub{font-size:16px;color:rgba(255,248,238,.45);}.fin-sub strong{color:#ffb900;font-size:22px;}
+.fin-emoji{font-size:64px;margin:10px 0;}
+.rv-box{background:#2a1200;border-radius:14px;padding:16px;width:100%;max-width:500px;
+margin:14px 0 24px;text-align:left;max-height:260px;overflow-y:auto;}
+.rv-hd{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:11px;letter-spacing:2px;
+color:rgba(255,185,0,.5);margin-bottom:8px;}
+.rv-item{display:flex;align-items:center;gap:8px;padding:5px 0;
+border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+.rv-item:last-child{border-bottom:none;}
+.rv-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rv-dot.p{background:#4caf50;}.rv-dot.f{background:#ef5350;}
+.again-btn{background:#e2231a;color:#fff;border:none;font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;
+font-size:24px;letter-spacing:2px;padding:14px 54px;border-radius:50px;cursor:pointer;
+box-shadow:0 4px 18px rgba(226,35,26,.4);transition:.2s;}
+.again-btn:hover{background:#a81812;transform:scale(1.04);}
+
+/* REFERENCE */
+#ref{display:none;flex-direction:column;padding:20px 18px 40px;}
+#ref.on{display:flex;}
+.ref-title{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:26px;color:#ffb900;letter-spacing:2px;margin-bottom:14px;}
+.ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
+.rfc{background:#2a1200;border-radius:12px;padding:12px 14px;border:1px solid rgba(255,185,0,.1);}
+.rfc-name{font-family:Impact, ‘Arial Narrow’, Arial, sans-serif;font-size:15px;color:#ffb900;letter-spacing:1px;margin-bottom:6px;}
+.rfc-row{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,248,238,.75);padding:2px 0;}
+.rfc-row .rn{margin-left:auto;font-size:10px;color:rgba(255,248,238,.45);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#3d1900;border-radius:2px;}
+</style>
+
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">🍔 <span>Wendy's</span> Quiz</div>
+  <div class="hdr-scores">
+    <div class="hs"><div class="hs-n g" id="sc-c">0</div><div class="hs-l">Correct</div></div>
+    <div class="hs"><div class="hs-n b" id="sc-w">0</div><div class="hs-l">Wrong</div></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nv on" onclick="goTab('home')">🏠 Home</button>
+  <button class="nv" onclick="goTab('ref')">📋 Reference</button>
+</div>
+
+<!-- HOME -->
+
+<div id="home" class="scr on">
+  <div class="h-title">BUILD<br>THE<br>BURGER</div>
+  <div class="h-sub">Tap or drag ingredients onto the plate in the right order — top bun first, bottom bun last.</div>
+  <div class="mode-grid">
+    <div class="mc on"  onclick="selMode(this,'all')">     <div class="mc-i">🎯</div><div class="mc-n">All Sandwiches</div><div class="mc-d">Full lineup — 22 items</div></div>
+    <div class="mc"     onclick="selMode(this,'numbered')"> <div class="mc-i">🔢</div><div class="mc-n">Core Numbered</div><div class="mc-d">#1 through #11</div></div>
+    <div class="mc"     onclick="selMode(this,'jr')">       <div class="mc-i">🍔</div><div class="mc-n">Jr. Burgers</div><div class="mc-d">Junior & kids lineup</div></div>
+    <div class="mc"     onclick="selMode(this,'q5')">       <div class="mc-i">⚡</div><div class="mc-n">Quick 5</div><div class="mc-d">5 questions · 30s each</div></div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">START QUIZ</button>
+</div>
+
+<!-- QUIZ -->
+
+<div id="quiz" class="scr">
+  <div class="qbar">
+    <div class="qnum" id="qnum">1 / 5</div>
+    <div class="prog"><div class="prog-f" id="prog-f" style="width:0%"></div></div>
+    <!-- TIMER (Quick 5 only) -->
+    <div class="timer-wrap" id="timer-wrap">
+      <div class="timer-ring">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <circle class="bg" cx="18" cy="18" r="15.5"/>
+          <circle class="fg" id="timer-arc" cx="18" cy="18" r="15.5"
+            stroke-dasharray="97.4" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="timer-num">30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-name-bar">
+    <div class="qn-lbl" id="qn-lbl">SANDWICH</div>
+    <div class="qn-name" id="qn-name">Dave's Single</div>
+  </div>
+
+  <div class="quiz-main">
+    <!-- LEFT: Plate -->
+    <div class="plate-col">
+      <div class="plate-head">
+        <span>🍽️ YOUR PLATE</span>
+        <span class="plate-hint">TOP → BOTTOM</span>
+      </div>
+      <div class="plate-drop" id="plate-drop"
+           ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragleave="onDragLeave(event)">
+        <div class="plate-empty">Tap ingredients →</div>
+      </div>
+      <div class="plate-actions">
+        <button class="pa-btn pa-clear" onclick="clearPlate()">Clear</button>
+        <button class="pa-btn pa-submit" id="sub-btn" onclick="submitAnswer()">SUBMIT</button>
+      </div>
+    </div>
+
+```
+<!-- RIGHT: Palette (tap to add / desktop drag) -->
+<div class="palette-col" id="palette-col"></div>
+```
+
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+
+<div class="res-overlay" id="res-overlay">
+  <div class="res-box" id="res-box">
+    <div class="res-title" id="res-title">PERFECT!</div>
+    <div class="res-detail" id="res-detail"></div>
+    <button class="res-nxt" id="res-nxt" onclick="nextQ()">NEXT →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+
+<div id="results" class="scr">
+  <div class="fin-title" id="fin-title">DONE</div>
+  <div class="fin-sub">You got <strong id="fin-score">0/0</strong> correct</div>
+  <div class="fin-emoji" id="fin-emoji">🎉</div>
+  <div class="rv-box"><div class="rv-hd">QUESTION REVIEW</div><div id="rv-list"></div></div>
+  <button class="again-btn" onclick="goTab('home')">PLAY AGAIN</button>
+</div>
+
+<!-- REFERENCE -->
+
+<div id="ref" class="scr">
+  <div class="ref-title">📋 Build Card Reference</div>
+  <div class="ref-grid" id="ref-grid"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// SANDWICH DATA
+// All "3 Bacon" / "2 Bacon" are now just repeated
+// single "Bacon" entries — they combine on the plate.
+// ═══════════════════════════════════════════════════
+const SW = [
+  {id:1,  num:"#1",    name:"Dave's Single",                 type:"numbered",
+   build:["Premium Bun","Mayo","Ketchup","Pickle","Pickle","Pickle","Onion","Onion","Tomato","Lettuce","200ct Cheese Slice","Large Beef Patty","200ct Cheese Slice","Premium Bottom Bun"]},
+  {id:2,  num:"#2",    name:"Dave's Double",                 type:"numbered",
+   build:["Premium Bun","Mayo","Ketchup","Pickle","Pickle","Pickle","Onion","Onion","Tomato","Lettuce","200ct Cheese Slice","Large Beef Patty","200ct Cheese Slice","Large Beef Patty","Premium Bottom Bun"]},
+  {id:3,  num:"#3",    name:"Dave's Triple",                 type:"numbered",
+   build:["Premium Bun","Mayo","Ketchup","Pickle","Pickle","Pickle","Onion","Onion","Tomato","Lettuce","200ct Cheese Slice","Large Beef Patty","200ct Cheese Slice","Large Beef Patty","200ct Cheese Slice","Large Beef Patty","Premium Bottom Bun"]},
+  {id:4,  num:"#4",    name:"Bacon Deluxe",                  type:"numbered",
+   build:["Premium Bun","Mayo","Ketchup","Pickle","Pickle","Pickle","Onion","Onion","Tomato","Lettuce","Bacon","Bacon","Bacon","200ct Cheese Slice","Large Beef Patty","200ct Cheese Slice","Premium Bottom Bun"]},
+  {id:5,  num:"#5",    name:"Baconator",                     type:"numbered",
+   build:["Premium Bun","Mayo","Ketchup","Bacon","Bacon","Bacon","200ct Cheese Slice","Large Beef Patty","Bacon","Bacon","Bacon","200ct Cheese Slice","Large Beef Patty","Premium Bottom Bun"]},
+  {id:6,  num:"#5-or", name:"Son of Baconator",              type:"numbered",
+   build:["Premium Bun","Mayo","Ketchup","Bacon","Bacon","200ct Cheese Slice","Small Beef Patty","Bacon","Bacon","200ct Cheese Slice","Small Beef Patty","Premium Bottom Bun"]},
+  {id:7,  num:"#6",    name:"Spicy Chicken",                 type:"numbered",
+   build:["Premium Bun","Mayo","Tomato","Lettuce","Spicy Chicken","Premium Bottom Bun"]},
+  {id:8,  num:"#7",    name:"Classic Chicken",               type:"numbered",
+   build:["Premium Bun","Mayo","Pickle","Pickle","Pickle","Tomato","Lettuce","Classic Chicken","Premium Bottom Bun"]},
+  {id:9,  num:"#9",    name:"Asiago Ranch Club (Classic)",   type:"numbered",
+   build:["Premium Bun","Mayo","Tomato","Lettuce","Bacon","Bacon","Bacon","Asiago Cheese","Classic Chicken","Premium Bottom Bun"]},
+  {id:10, num:"#9",    name:"Asiago Ranch Club (Spicy)",     type:"numbered",
+   build:["Premium Bun","Mayo","Tomato","Lettuce","Bacon","Bacon","Bacon","Asiago Cheese","Spicy Chicken","Premium Bottom Bun"]},
+  {id:11, num:"#10",   name:"Chicken Ranch Wrap (Diced)",    type:"numbered",
+   build:["Diced Chicken","Cheddar","Lettuce","Ranch","Tortilla"]},
+  {id:12, num:"#10",   name:"Chicken Ranch Wrap (½ Classic)",type:"numbered",
+   build:["½ Classic Chicken","Cheddar","Lettuce","Ranch","Tortilla"]},
+  {id:13, num:"#10",   name:"Chicken Ranch Wrap (½ Spicy)",  type:"numbered",
+   build:["½ Spicy Chicken","Cheddar","Lettuce","Ranch","Tortilla"]},
+  {id:14, num:"#11",   name:"Spicy Chicken Club",            type:"numbered",
+   build:["Premium Bun","Mayo","Sriracha","Tomato","Lettuce","Bacon","Bacon","Bacon","200ct Cheese Slice","Spicy Chicken","Premium Bottom Bun"]},
+  {id:15, num:"JR",    name:"Jr. Bacon Cheeseburger",        type:"jr",
+   build:["Value Bun","Mayo","Tomato","Lettuce","Bacon","Bacon","200ct Cheese Slice","Small Beef Patty","Value Bottom Bun"]},
+  {id:16, num:"JR",    name:"Jr. Cheeseburger Deluxe",       type:"jr",
+   build:["Value Bun","Mayo","Ketchup","Pickle","Pickle","Onion","Tomato","Lettuce","200ct Cheese Slice","Small Beef Patty","Value Bottom Bun"]},
+  {id:17, num:"JR",    name:"Jr. Hamburger Deluxe",          type:"jr",
+   build:["Value Bun","Mayo","Ketchup","Pickle","Pickle","Onion","Tomato","Lettuce","Small Beef Patty","Value Bottom Bun"]},
+  {id:18, num:"JR",    name:"Jr. Bacon Double Cheeseburger", type:"jr",
+   build:["Value Bun","Mayo","Tomato","Lettuce","Bacon","Bacon","Small Beef Patty","200ct Cheese Slice","Small Beef Patty","Value Bottom Bun"]},
+  {id:19, num:"JR",    name:"Double Stack",                  type:"jr",
+   build:["Value Bun","Ketchup","Pickle","Pickle","Onion","Small Beef Patty","200ct Cheese Slice","Small Beef Patty","Value Bottom Bun"]},
+  {id:20, num:"JR",    name:"Cheesy Cheddar",                type:"jr",
+   build:["Value Bun","Cheese Sauce","200ct Cheese Slice","Small Beef Patty","Value Bottom Bun"]},
+  {id:21, num:"KM",    name:"Kids' Meal Hamburger",          type:"jr",
+   build:["Value Bun","Ketchup","Small Beef Patty","Value Bottom Bun"]},
+  {id:22, num:"KM",    name:"Kids' Meal Cheeseburger",       type:"jr",
+   build:["Value Bun","Ketchup","Small Beef Patty","200ct Cheese Slice","Value Bottom Bun"]},
+];
+
+// ═══════════════════════════════════════════════════
+// PALETTE — single Bacon card only, multi-use
+// ═══════════════════════════════════════════════════
+const PALETTE = [
+  {cat:"BUNS",    id:"pb",    icon:"🍞", name:"Premium Bun",       value:"Premium Bun"},
+  {cat:"BUNS",    id:"vb",    icon:"🍞", name:"Value Bun",         value:"Value Bun"},
+  {cat:"BUNS",    id:"tr",    icon:"🌯", name:"Tortilla",          value:"Tortilla"},
+  {cat:"BUNS",    id:"pbb",   icon:"🍞", name:"Premium Bottom Bun",value:"Premium Bottom Bun"},
+  {cat:"BUNS",    id:"vbb",   icon:"🍞", name:"Value Bottom Bun",  value:"Value Bottom Bun"},
+  {cat:"PATTY",   id:"lp",    icon:"🥩", name:"Large Beef Patty",  value:"Large Beef Patty",  multi:true},
+  {cat:"PATTY",   id:"sp",    icon:"🥩", name:"Small Beef Patty",  value:"Small Beef Patty",  multi:true},
+  {cat:"CHICKEN", id:"cc",    icon:"🍗", name:"Classic Chicken",   value:"Classic Chicken"},
+  {cat:"CHICKEN", id:"sc",    icon:"🍗", name:"Spicy Chicken",     value:"Spicy Chicken"},
+  {cat:"CHICKEN", id:"hcc",   icon:"🍗", name:"½ Classic Chicken", value:"½ Classic Chicken"},
+  {cat:"CHICKEN", id:"hsc",   icon:"🍗", name:"½ Spicy Chicken",   value:"½ Spicy Chicken"},
+  {cat:"CHICKEN", id:"dc",    icon:"🍗", name:"Diced Chicken",     value:"Diced Chicken"},
+  {cat:"CHEESE",  id:"cs200", icon:"🧀", name:"200ct Cheese Slice",value:"200ct Cheese Slice", multi:true},
+  {cat:"CHEESE",  id:"asi",   icon:"🧀", name:"Asiago Cheese",     value:"Asiago Cheese"},
+  {cat:"CHEESE",  id:"ched",  icon:"🧀", name:"Cheddar",           value:"Cheddar"},
+  {cat:"CHEESE",  id:"csauce",icon:"🫙", name:"Cheese Sauce",      value:"Cheese Sauce"},
+  // Single Bacon — tap multiple times, consecutive ones merge into ×2, ×3 etc.
+  {cat:"BACON",   id:"bac",   icon:"🥓", name:"Bacon",             value:"Bacon", multi:true},
+  {cat:"VEGGIES", id:"let",   icon:"🥬", name:"Lettuce",           value:"Lettuce"},
+  {cat:"VEGGIES", id:"tom",   icon:"🍅", name:"Tomato",            value:"Tomato"},
+  // Single Pickle — tap up to 3 times (greyed out at max 3)
+  {cat:"VEGGIES", id:"pick",  icon:"🥒", name:"Pickle",           value:"Pickle", multi:true, max:3},
+  // Single Onion — tap up to 2 times (greyed out at max 2)
+  {cat:"VEGGIES", id:"oni",   icon:"🧅", name:"Onion",            value:"Onion",  multi:true, max:2},
+  {cat:"SAUCES",  id:"mayo",  icon:"🤍", name:"Mayo",              value:"Mayo"},
+  {cat:"SAUCES",  id:"ketch", icon:"🟥", name:"Ketchup",           value:"Ketchup"},
+  {cat:"SAUCES",  id:"ranch", icon:"⬜", name:"Ranch",             value:"Ranch"},
+  {cat:"SAUCES",  id:"srir",  icon:"🌶️", name:"Sriracha",          value:"Sriracha"},
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// plate = array of {value, palId, count}
+// When consecutive items have same value+palId, count increments
+// ═══════════════════════════════════════════════════
+let mode='all', quizList=[], qIdx=0;
+let answered=false, plate=[];
+let sC=0, sW=0, log=[];
+let dragPalId=null;
+
+// Timer state
+const Q5_TIME=30; // seconds per question for Quick 5
+let timerInterval=null, timerLeft=0, isQ5=false;
+
+// ═══════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════
+function goTab(t){
+  stopTimer();
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nv').forEach(b=>b.classList.remove('on'));
+  document.getElementById(t).classList.add('on');
+  document.querySelectorAll('.nv')[t==='home'?0:1].classList.add('on');
+  if(t==='ref') buildRef();
+  if(t==='home'){sC=0;sW=0;updScore();}
+}
+function selMode(el,m){
+  document.querySelectorAll('.mc').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); mode=m;
+}
+
+// ═══════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════
+function startQuiz(){
+  let pool;
+  isQ5 = mode==='q5';
+  if(mode==='all') pool=[...SW];
+  else if(mode==='numbered') pool=SW.filter(s=>s.type==='numbered');
+  else if(mode==='jr') pool=SW.filter(s=>s.type==='jr');
+  else pool=shuf([...SW]).slice(0,5);
+  quizList=shuf(pool); qIdx=0; sC=0; sW=0; log=[];
+  updScore();
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nv').forEach(b=>b.classList.remove('on'));
+  document.getElementById('quiz').classList.add('on');
+  document.getElementById('timer-wrap').classList.toggle('on', isQ5);
+  loadQ();
+}
+
+// ═══════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════
+const CIRC=97.4; // 2*pi*15.5
+function startTimer(){
+  stopTimer();
+  timerLeft=Q5_TIME;
+  updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timerLeft--;
+    updateTimerUI();
+    if(timerLeft<=0){ stopTimer(); autoSubmit(); }
+  },1000);
+}
+function stopTimer(){
+  clearInterval(timerInterval); timerInterval=null;
+}
+function updateTimerUI(){
+  const arc=document.getElementById('timer-arc');
+  const num=document.getElementById('timer-num');
+  if(!arc) return;
+  const pct=timerLeft/Q5_TIME;
+  arc.style.strokeDashoffset=CIRC*(1-pct);
+  num.textContent=timerLeft;
+  const urgent=timerLeft<=10;
+  arc.classList.toggle('urgent',urgent);
+  num.classList.toggle('urgent',urgent);
+}
+function autoSubmit(){
+  if(!answered) submitAnswer();
+}
+
+// ═══════════════════════════════════════════════════
+// LOAD QUESTION
+// ═══════════════════════════════════════════════════
+function loadQ(){
+  answered=false; plate=[];
+  dragPalId=null;
+  const q=quizList[qIdx], tot=quizList.length;
+  document.getElementById('qnum').textContent=`${qIdx+1} / ${tot}`;
+  document.getElementById('prog-f').style.width=`${(qIdx/tot)*100}%`;
+  document.getElementById('qn-lbl').textContent=`SANDWICH ${q.num}`;
+  document.getElementById('qn-name').textContent=q.name;
+  document.getElementById('sub-btn').disabled=false;
+  document.getElementById('res-overlay').classList.remove('on');
+  renderPlate();
+  renderPalette();
+  if(isQ5) startTimer();
+}
+
+// ═══════════════════════════════════════════════════
+// PLATE RENDER
+// Each plate row = one merged group.
+// The raw plate array stores individual "Bacon" entries;
+// renderPlate collapses consecutive same-value entries into one row.
+// ═══════════════════════════════════════════════════
+function renderPlate(resultMode){
+  const drop=document.getElementById('plate-drop');
+  drop.innerHTML='';
+  if(plate.length===0){
+    drop.innerHTML='<div class="plate-empty">Tap ingredients →</div>';
+    return;
+  }
+
+  // Build display rows by collapsing consecutive same-value entries
+  const rows=buildRows(plate);
+
+  rows.forEach((row, ri)=>{
+    const pal=PALETTE.find(p=>p.id===row.palId)||{icon:'❓'};
+    const div=document.createElement('div');
+    div.className='plate-item';
+
+    let resultClass='';
+    if(resultMode){
+      // Check if this row's entries are all correct positionally
+      resultClass=row.allOk?'r-ok':'r-bad';
+      div.classList.add(resultClass);
+    }
+
+    // Count badge only if >1
+    const cntHtml=row.count>1
+      ?`<span class="p-cnt">×${row.count}</span>`:'';
+    const delHtml=resultMode?''
+      :`<span class="p-del" onclick="removePlateRow(${ri})">✕</span>`;
+
+    div.innerHTML=`<span class="p-num">${row.startIdx+1}</span><span class="p-ico">${pal.icon}</span><span class="p-name">${row.value}</span>${cntHtml}${delHtml}`;
+
+    // Desktop drag for reordering
+    if(!resultMode){
+      div.draggable=true;
+      div.addEventListener('dragstart',e=>{
+        e.dataTransfer.effectAllowed='move';
+        div.style.opacity='.4';
+        // store which raw index range to move
+        div._rowData=row;
+      });
+      div.addEventListener('dragend',()=>div.style.opacity='');
+    }
+    drop.appendChild(div);
+  });
+}
+
+// Collapse consecutive same-value+palId entries into display rows
+function buildRows(rawPlate){
+  if(!rawPlate.length) return [];
+  const rows=[];
+  let cur={...rawPlate[0], count:1, startIdx:0, indices:[0]};
+  for(let i=1;i<rawPlate.length;i++){
+    if(rawPlate[i].value===cur.value && rawPlate[i].palId===cur.palId){
+      cur.count++;
+      cur.indices.push(i);
+    } else {
+      rows.push(cur);
+      cur={...rawPlate[i], count:1, startIdx:i, indices:[i]};
+    }
+  }
+  rows.push(cur);
+  return rows;
+}
+
+// Remove all raw entries belonging to a display row
+function removePlateRow(rowIdx){
+  if(answered) return;
+  const rows=buildRows(plate);
+  if(rowIdx>=rows.length) return;
+  const indices=rows[rowIdx].indices;
+  // remove from highest index first
+  [...indices].reverse().forEach(i=>plate.splice(i,1));
+  renderPlate();
+  updateAllPalCards();
+}
+
+// ═══════════════════════════════════════════════════
+// PALETTE RENDER
+// Desktop: draggable. Mobile: tap only (palette scrolls freely).
+// ═══════════════════════════════════════════════════
+const isMobile=()=>('ontouchstart' in window);
+
+function renderPalette(){
+  const col=document.getElementById('palette-col');
+  col.innerHTML='';
+  let lastCat='';
+  PALETTE.forEach(pal=>{
+    if(pal.cat!==lastCat){
+      const lbl=document.createElement('div');
+      lbl.className='cat-lbl'; lbl.textContent=pal.cat;
+      col.appendChild(lbl); lastCat=pal.cat;
+    }
+    const card=document.createElement('div');
+    card.className='ing-card';
+    card.id='pal-'+pal.id;
+    card.innerHTML=`<span class="ic-ico">${pal.icon}</span><div class="ic-info"><div class="ic-name">${pal.name}</div></div><span class="drag-hint">${isMobile()?'':'⠿'}</span>`;
+
+    if(pal.multi){
+      const cnt=document.createElement('span');
+      cnt.className='ic-count'; cnt.id='cnt-'+pal.id; cnt.textContent='×0';
+      card.querySelector('.ic-info').appendChild(cnt);
+    }
+
+    // Tap = add (works on both mobile and desktop)
+    card.addEventListener('click',()=>{ if(!answered) addToPlate(pal.id); });
+
+    // Desktop only: HTML5 drag
+    if(!isMobile()){
+      card.draggable=true;
+      card.addEventListener('dragstart',e=>{
+        dragPalId=pal.id;
+        e.dataTransfer.effectAllowed='copy';
+        setTimeout(()=>card.classList.add('dragging'),0);
+      });
+      card.addEventListener('dragend',()=>{
+        card.classList.remove('dragging');
+        dragPalId=null;
+      });
+    }
+
+    col.appendChild(card);
+    updatePalCard(pal.id);
+  });
+}
+
+function updatePalCard(palId){
+  const pal=PALETTE.find(p=>p.id===palId);
+  if(!pal) return;
+  const card=document.getElementById('pal-'+palId);
+  if(!card) return;
+  const usedCount=plate.filter(x=>x.palId===palId).length;
+  if(pal.multi){
+    const cnt=document.getElementById('cnt-'+palId);
+    if(cnt) cnt.textContent=`×${usedCount}`;
+    card.classList.remove('used','used-multi');
+    if(pal.max && usedCount>=pal.max){
+      // At cap — go fully greyed out like a used single-use card
+      card.classList.add('used');
+    } else if(usedCount>0){
+      card.classList.add('used-multi');
+    }
+  } else {
+    card.classList.toggle('used', usedCount>0);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// ADD TO PLATE
+// Adds one raw entry. If last entry has same value+palId,
+// it's contiguous — renderPlate will merge them visually.
+// ═══════════════════════════════════════════════════
+function addToPlate(palId){
+  const pal=PALETTE.find(p=>p.id===palId); if(!pal) return;
+  // Single-use: block if already on plate
+  if(!pal.multi && plate.some(x=>x.palId===palId)) return;
+  // Capped multi: block if at max
+  if(pal.max){
+    const usedCount=plate.filter(x=>x.palId===palId).length;
+    if(usedCount>=pal.max) return;
+  }
+  plate.push({palId, value:pal.value});
+  renderPlate();
+  updatePalCard(palId);
+  // scroll plate to bottom
+  const d=document.getElementById('plate-drop');
+  d.scrollTop=d.scrollHeight;
+}
+
+function updateAllPalCards(){
+  PALETTE.forEach(p=>updatePalCard(p.id));
+}
+
+// ═══════════════════════════════════════════════════
+// DRAG (desktop plate drop zone)
+// ═══════════════════════════════════════════════════
+function onDragOver(e){
+  e.preventDefault();
+  document.getElementById('plate-drop').classList.add('drag-over');
+}
+function onDragLeave(e){
+  if(!document.getElementById('plate-drop').contains(e.relatedTarget))
+    document.getElementById('plate-drop').classList.remove('drag-over');
+}
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('plate-drop').classList.remove('drag-over');
+  if(answered||!dragPalId) return;
+  addToPlate(dragPalId);
+  dragPalId=null;
+}
+
+function clearPlate(){
+  if(answered) return;
+  plate=[];
+  renderPlate();
+  updateAllPalCards();
+}
+
+// ═══════════════════════════════════════════════════
+// SUBMIT
+// Compare raw plate values against raw build array.
+// ═══════════════════════════════════════════════════
+function submitAnswer(){
+  if(answered) return;
+  answered=true;
+  stopTimer();
+  document.getElementById('sub-btn').disabled=true;
+
+  const q=quizList[qIdx];
+  const correct=q.build;
+  const user=plate.map(x=>x.value);
+  const cSet=new Set(correct), uSet=new Set(user);
+  const missing=correct.filter(v=>!uSet.has(v));
+  const extra=user.filter(v=>!cSet.has(v));
+  const perfectOrder=JSON.stringify(correct)===JSON.stringify(user);
+
+  // Mark each raw plate item ok/bad
+  plate.forEach((item,i)=>{ item.ok = user[i]===correct[i]; });
+
+  // Build display rows with ok status
+  const rows=buildRows(plate);
+  rows.forEach(row=>{ row.allOk=row.indices.every(i=>plate[i].ok); });
+
+  // Re-render with result
+  const drop=document.getElementById('plate-drop');
+  drop.innerHTML='';
+  rows.forEach(row=>{
+    const pal=PALETTE.find(p=>p.id===row.palId)||{icon:'❓'};
+    const div=document.createElement('div');
+    div.className='plate-item '+(row.allOk?'r-ok':'r-bad');
+    const cntHtml=row.count>1?`<span class="p-cnt">×${row.count}</span>`:'';
+    div.innerHTML=`<span class="p-num">${row.startIdx+1}</span><span class="p-ico">${pal.icon}</span><span class="p-name">${row.value}</span>${cntHtml}`;
+    drop.appendChild(div);
+  });
+
+  if(perfectOrder) sC++; else sW++;
+  updScore();
+
+  const rb=document.getElementById('res-box');
+  rb.classList.remove('pass','fail');
+  if(perfectOrder){
+    rb.classList.add('pass');
+    document.getElementById('res-title').textContent='✅ PERFECT BUILD!';
+    document.getElementById('res-detail').innerHTML=`Every ingredient in the right order for <strong>${q.name}</strong>!`;
+    log.push({name:q.name,pass:true});
+  } else {
+    rb.classList.add('fail');
+    const ingOk=missing.length===0&&extra.length===0;
+    document.getElementById('res-title').textContent=ingOk?'⚠️ WRONG ORDER':'❌ NOT QUITE';
+    let d=`<strong>Correct build:</strong><br>`;
+    // Show the correct build collapsed (merge consecutive)
+    const correctRows=[];
+    let cr=null;
+    correct.forEach((v,i)=>{
+      if(cr&&cr.v===v){cr.c++;cr.e=i;}
+      else{if(cr)correctRows.push(cr);cr={v,c:1,s:i,e:i};}
+    });
+    if(cr)correctRows.push(cr);
+    let pos=1;
+    correctRows.forEach(r=>{
+      const userSlice=user.slice(r.s,r.s+r.c);
+      const ok=userSlice.every(u=>u===r.v);
+      const label=r.c>1?`${r.v} ×${r.c}`:r.v;
+      d+=`<span style="color:${ok?'#a5d6a7':'#ef9a9a'}">${pos}. ${label}</span><br>`;
+      pos+=r.c;
+    });
+    if(missing.length) d+=`<br>Missing: ${[...new Set(missing)].map(v=>`<span class="mk">${v}</span>`).join(', ')}`;
+    if(extra.length)   d+=`<br>Extra: ${[...new Set(extra)].map(v=>`<span class="ek">${v}</span>`).join(', ')}`;
+    document.getElementById('res-detail').innerHTML=d;
+    log.push({name:q.name,pass:false});
+  }
+  document.getElementById('res-nxt').textContent=qIdx+1===quizList.length?'SEE RESULTS →':'NEXT →';
+  document.getElementById('res-overlay').classList.add('on');
+}
+
+function nextQ(){
+  qIdx++;
+  document.getElementById('res-overlay').classList.remove('on');
+  if(qIdx>=quizList.length) showResults(); else loadQ();
+}
+
+// ═══════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════
+function showResults(){
+  stopTimer();
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById('results').classList.add('on');
+  const tot=quizList.length, pct=Math.round((sC/tot)*100);
+  document.getElementById('fin-score').textContent=`${sC}/${tot}`;
+  let t,e;
+  if(pct===100){t='PERFECT!';e='🌟';}
+  else if(pct>=80){t='GREAT WORK';e='🔥';}
+  else if(pct>=60){t='GETTING THERE';e='💪';}
+  else{t='KEEP PRACTICING';e='📚';}
+  document.getElementById('fin-title').textContent=t;
+  document.getElementById('fin-emoji').textContent=e;
+  const list=document.getElementById('rv-list'); list.innerHTML='';
+  log.forEach(r=>{
+    const d=document.createElement('div'); d.className='rv-item';
+    d.innerHTML=`<div class="rv-dot ${r.pass?'p':'f'}"></div><span style="flex:1;font-weight:800">${r.name}</span><span style="font-size:11px;color:rgba(255,248,238,.45)">${r.pass?'✅':'❌'}</span>`;
+    list.appendChild(d);
+  });
+}
+
+function updScore(){document.getElementById('sc-c').textContent=sC;document.getElementById('sc-w').textContent=sW;}
+
+// ═══════════════════════════════════════════════════
+// REFERENCE
+// ═══════════════════════════════════════════════════
+function buildRef(){
+  const g=document.getElementById('ref-grid'); if(g.children.length) return;
+  SW.forEach(s=>{
+    const c=document.createElement('div'); c.className='rfc';
+    // Collapse consecutive same ingredients for display
+    const collapsed=[];
+    s.build.forEach(v=>{
+      if(collapsed.length&&collapsed[collapsed.length-1].v===v) collapsed[collapsed.length-1].c++;
+      else collapsed.push({v,c:1});
+    });
+    let pos=1;
+    const rows=collapsed.map(r=>{
+      const label=r.c>1?`${r.v} ×${r.c}`:r.v;
+      const row=`<div class="rfc-row"><span>${label}</span><span class="rn">#${pos}</span></div>`;
+      pos+=r.c; return row;
+    }).join('');
+    c.innerHTML=`<div class="rfc-name">${(s.num!=='JR'&&s.num!=='KM')?s.num+' — ':''}${s.name}</div><div>${rows}</div>`;
+    g.appendChild(c);
+  });
+}
+
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+</script>
+
+</body>
+</html>
